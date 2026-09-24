@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Dual Control Panel</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            background: #181a1b;
+            color: #fff;
+            padding: 15px;
+            margin: 0;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+            color: #00d2ff;
+        }
+
+        p {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 0;
+        }
+
+        .container {
+            max-width: 380px;
+            margin: 0 auto;
+            background: #242729;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+        }
+
+        .dpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .btn-rc {
+            padding: 15px 0;
+            font-size: 15px;
+            font-weight: bold;
+            color: white;
+            background: #007bff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn-rc:active {
+            background: #e63946;
+            transform: scale(0.95);
+        }
+
+        .btn-stop {
+            background: #d90429;
+        }
+
+        .btn-empty {
+            visibility: hidden;
+        }
+
+        .guide-panel {
+            background: #2f3336;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .key-badge {
+            background: #00d2ff;
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        .speed-val {
+            color: #00d2ff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>ESP32 Control</h1>
+        <p>WEBパネル (方向反転補正済)</p>
+
+        <div class="dpad">
+            <div class="btn-empty"></div>
+            <button class="btn-rc" onclick="sendCmd('/cmd/forward')">▲ 前進 [W]</button>
+            <div class="btn-empty"></div>
+
+            <button class="btn-rc" onclick="sendCmd('/cmd/left')">◄ 左旋回 [A]</button>
+            <button class="btn-rc btn-stop" onclick="sendCmd('/cmd/stop')">■ 停止 [Space]</button>
+            <button class="btn-rc" onclick="sendCmd('/cmd/right')">右旋回 ► [D]</button>
+
+            <div class="btn-empty"></div>
+            <button class="btn-rc" onclick="sendCmd('/cmd/backward')">▼ 後退 [S]</button>
+            <div class="btn-empty"></div>
+        </div>
+
+        <div class="dpad" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button class="btn-rc" style="background:#2a9d8f;" onclick="sendCmd('/speed/up')">速度 UP (+100us)
+                [I]</button>
+            <button class="btn-rc" style="background:#e76f51;" onclick="sendCmd('/speed/down')">速度 DOWN (-100us)
+                [K]</button>
+        </div>
+
+        <div class="guide-panel">
+            <b>PC キーボード操作ガイド:</b><br>
+            • <span class="key-badge">W</span>前進 / <span class="key-badge">S</span>後退 / <span
+                class="key-badge">A</span>左旋回 / <span class="key-badge">D</span>右旋回<br>
+            • <span class="key-badge">I</span> 速度UP / <span class="key-badge">K</span> 速度DOWN<br>
+            • <span class="key-badge">Space</span> / <span class="key-badge">X</span> 即時停止<br>
+            現在のパルス間隔: <span id="speed-disp" class="speed-val">500</span> µs
+        </div>
+    </div>
+
+    <script>
+        function sendCmd(path) {
+            fetch(path).then(res => res.text()).then(val => {
+                if (val && !isNaN(val)) document.getElementById('speed-disp').innerText = val;
+            }).catch(e => console.log(e));
+        }
+
+        window.addEventListener('keydown', function (e) {
+            if (e.repeat) return;
+            const k = e.key.toLowerCase();
+            if (k === 'w') sendCmd('/cmd/forward');
+            else if (k === 's') sendCmd('/cmd/backward');
+            else if (k === 'a') sendCmd('/cmd/left');
+            else if (k === 'd') sendCmd('/cmd/right');
+            else if (k === ' ') sendCmd('/cmd/stop');
+            else if (k === 'x') sendCmd('/cmd/stop');
+            else if (k === 'i') sendCmd('/speed/up');
+            else if (k === 'k') sendCmd('/speed/down');
+        });
+    </script>
+</body>
+
+</html>
